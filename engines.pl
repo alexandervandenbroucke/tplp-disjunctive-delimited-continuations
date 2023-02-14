@@ -2,11 +2,6 @@
 %% A (partial) implementation of Tarau and Majumdar's Interoperating logic
 %% engines (2009) with delimited control.
 %%
-%%
-%% This code uses the SWI-Prolog type_check package to type check Prolog code.
-%% Type annotations do not influence the run-time behaviour, and can be
-%% commented out on systems that do not support type checking.
-%%
 %% Author: Alexander Vandenbroucke
 
 :- ['meta.pl'].
@@ -29,10 +24,6 @@ return(X) :-
     shift(return(X)).
 
 %% Variant of engines/1 that takes a list of engine states.
-%%
-%% Note: the type system does not support heterogenous lists, and therefore,
-%% all engines must have the same result type. This can be worked around by
-%% setting R = pred.
 engines(G,EngineList) :-
     copy_term(G,GC),
     reset(GC,GC,R),

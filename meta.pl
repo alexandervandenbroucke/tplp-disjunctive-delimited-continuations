@@ -109,12 +109,6 @@ do_reset((X = Y,Conj),Pattern,PatternCopy,Result,Disj) :-
     ( X = Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% unification pattern
-do_reset((X = Y,Conj),Pattern,PatternCopy,Result,Disj) :-
-    !,
-    ( X = Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
-    ; backtrack(Pattern,Result,Disj)).
-
 %%term non-equivalence pattern
 do_reset((X \== Y,Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
@@ -137,10 +131,12 @@ do_reset((not(G),Conj),Pattern,PatternCopy,Result,Disj) :-
         BranchPattern = PatternCopy,
 	Result = shift(X,(((not(Cont;Branch),Conj),true)),_,fail)
     ; backtrack(Pattern,Result,Disj)).
+
 %% cut/0-pattern
 do_reset((!,Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
+
 %% findall/3-pattern
 do_reset((findall(T,G,L),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
@@ -200,6 +196,7 @@ do_reset((sort(LIn,LOut),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     sort(LIn,LOut),
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
+
 %% clause pattern.
 do_reset((G,Conj),Pattern,PatternCopy,Result,Disj) :-
     !,

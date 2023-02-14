@@ -10,24 +10,24 @@
 
 %%-----------------------------------------------------------------------------
 %% Top-level predicate to find all solutions, non-deterministically.
-solutions(G0) :-
+toplevel(G0) :-
     copy_term(G0,G),
     copy_term(G,GC),
     empty_disj(EmptyDisj),
     do_reset((GC,true),G,GC,Result,EmptyDisj),
-    analyze_solutions(G0,G,Result).
+    analyze_toplevel(G0,G,Result).
 
-analyze_solutions(G0,G,success(PatternCopy,Branch)) :-
+analyze_toplevel(G0,G,success(PatternCopy,Branch)) :-
     ( G0 = G
     ; copy_term(PatternCopy,PC),
       empty_disj(EmptyDisj),
       do_reset((Branch,true),PC,PatternCopy,Result,EmptyDisj),
-      analyze_solutions(G0,PC,Result)
+      analyze_toplevel(G0,PC,Result)
     ).
-analyze_solutions(_,_,shift(_,_,_,_)) :-
-    write('solutions: unexpected shift/1.\n'),
+analyze_toplevel(_,_,shift(_,_,_,_)) :-
+    write('toplevel: unexpected shift/1.\n'),
     fail.
-analyze_solutions(_,_,failure) :- fail.
+analyze_toplevel(_,_,failure) :- fail.
 
 
 
@@ -62,16 +62,16 @@ analyze_solutions(_,_,failure) :- fail.
 %%   disjunctive goal, or a single fail/0 predicate.
 do_reset(true,Pattern,PatternCopy,Result,Disj) :-
     !,
-    disjunction(BranchPattern,Branch) := Disj,
-    Pattern := PatternCopy,
-    Result  := success(BranchPattern,Branch).
+    disjunction(BranchPattern,Branch) = Disj,
+    Pattern = PatternCopy,
+    Result  = success(BranchPattern,Branch).
 
-%% fail/0-pattern
+%% fail/0 pattern
 do_reset((fail,_Conj),Pattern,_,Result,Disj) :-
     !,
     backtrack(Pattern,Result,Disj).
 
-%% true/0-pattern
+%% true/0 pattern
 do_reset((true,Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
@@ -87,21 +87,20 @@ do_reset(((G1;G2),Conj),Pattern,PatternCopy,Result,Disj) :-
     disjoin(Branch,Disj,NewDisj),
     do_reset((G1,Conj),Pattern,PatternCopy,Result,NewDisj).
 
-%% shift/1-pattern
+%% shift/1 pattern
 do_reset((shift(X),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
-    Pattern := PatternCopy,
-    Disj    := disjunction(BranchPattern,Branch),
-    Result  := shift(X,Conj,BranchPattern,Branch).
+    Pattern = PatternCopy,
+    Disj    = disjunction(BranchPattern,Branch),
+    Result  = shift(X,Conj,BranchPattern,Branch).
 
-%% (new) reset/3-pattern
+%% Fresh reset/3 pattern
 do_reset((reset(P,G,R),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     copy_term(P-G,PC-GC),
     empty_disj(D),
     do_reset((GC,true),Q,PC,S,D),
-    type_to_any(R,RAny),type_to_any(S,SAny),
-    do_reset((P = Q, (RAny = SAny, Conj)),Pattern,PatternCopy,Result,Disj).
+    do_reset((P = Q, (R = S, Conj)),Pattern,PatternCopy,Result,Disj).
 
 %% unification pattern
 do_reset((X = Y,Conj),Pattern,PatternCopy,Result,Disj) :-
@@ -115,13 +114,13 @@ do_reset((X \== Y,Conj),Pattern,PatternCopy,Result,Disj) :-
     ( X \== Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% copy_term/2-pattern
+%% copy_term/2 pattern
 do_reset((copy_term(X,Y),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( copy_term(X,Y) -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% not/1-pattern
+%% not/1 pattern
 do_reset((not(G),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     copy_term(G,GC),
@@ -132,66 +131,66 @@ do_reset((not(G),Conj),Pattern,PatternCopy,Result,Disj) :-
 	Result = shift(X,(((not(Cont;Branch),Conj),true)),_,fail)
     ; backtrack(Pattern,Result,Disj)).
 
-%% cut/0-pattern
+%% !/0 pattern
 do_reset((!,Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
 
-%% findall/3-pattern
+%% findall/3 pattern
 do_reset((findall(T,G,L),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( findall(T,G,L) -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% length/2-pattern
+%% length/2 pattern
 do_reset((length(L,X),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( length(L,X) -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% member/2-pattern
+%% member/2 pattern
 do_reset((member(X,L),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( member(X,L) -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% is/2-pattern
+%% is/2 pattern
 do_reset((is(R,Exp),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( R is Exp -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% (<)/2-pattern
+%% (<)/2 pattern
 do_reset((<(X,Y),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( X < Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% (>=)/2-pattern
+%% (>=)/2 pattern
 do_reset((>=(X,Y),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( X >= Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% (@<)/2-pattern
+%% (@<)/2 pattern
 do_reset((@<(X,Y),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( X @< Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% (@>=)/2-pattern
+%% (@>=)/2 pattern
 do_reset((@>=(X,Y),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     ( X @>= Y -> do_reset(Conj,Pattern,PatternCopy,Result,Disj)
     ; backtrack(Pattern,Result,Disj)).
 
-%% write/1-pattern
+%% write/1 pattern
 do_reset((write(T),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     write(T),
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
 
-%% sort/2-pattern
+%% sort/2 pattern
 do_reset((sort(LIn,LOut),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     sort(LIn,LOut),
@@ -201,7 +200,7 @@ do_reset((sort(LIn,LOut),Conj),Pattern,PatternCopy,Result,Disj) :-
 do_reset((G,Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     findall(GC-Body,(clause(G,Body), GC = G),Clauses),
-    ( Clauses := [] ->
+    ( Clauses = [] ->
         backtrack(Pattern,Result,Disj)
     ; disjoin_clauses(G,Clauses,ClausesDisj),
       do_reset((ClausesDisj,Conj),Pattern,PatternCopy,Result,Disj)
@@ -216,8 +215,8 @@ disjoin_clauses(G,[GC-Clause|Clauses], ((G=GC,Clause) ; Disj) ) :-
 %% backtracking
 backtrack(Pattern,Result,Disj) :-
     ( empty_disj(Disj) ->
-         Result := failure
-    ; Disj := disjunction(PatternCopy,G) ->
+         Result = failure
+    ; Disj = disjunction(PatternCopy,G) ->
          empty_disj(EmptyDisj),
 	 do_reset((G,true),Pattern,PatternCopy,Result,EmptyDisj)
          %% TODO: could be more efficient if we pattern match on G?
@@ -242,8 +241,8 @@ empty_disj(disjunction(_,fail)).
 disjoin(disjunction(_,fail),Disjunction,Disjunction) :- !.
 disjoin(Disjunction,disjunction(_,fail),Disjunction) :- !.
 disjoin(disjunction(PC1,G1),disjunction(PC2,G2),Disjunction) :-
-    PC1 := PC2,
-    Disjunction := disjunction(PC1, (G1 ; G2)).
+    PC1 = PC2,
+    Disjunction = disjunction(PC1, (G1 ; G2)).
 % NOTE: things could probably be made more efficient by not unifying PC1
 % and PC2, and keeping the disjunctions explicit, s.t. no fresh copy of
 % G2 needs to be made, but this is way simpler.

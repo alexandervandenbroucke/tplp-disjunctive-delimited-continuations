@@ -2,8 +2,9 @@
 %% Simulation of the PRISM and ProbLog using disjunctive delimited control.
 %% Computed probabilities are only correct for definite, non-looping programs.
 %%
-%% To run a PRISM goal, use toplevel(prob(Goal)).
-%% To run a ProbLog goal, use toplevel(prob(problog(Goal))).
+%% To run a PRISM goal, use toplevel(prism(Goal)).
+%% To run a ProbLog goal, use toplevel(prism(problog(Goal))).
+%%
 %% 
 %% Author: Alexander Vandenbroucke
 
@@ -18,7 +19,7 @@ msw(Key,Value) :-
     shift(msw(Key,Value)).
 
 % Run a PRISM goal.
-prob(Goal) :-
+prism(Goal) :-
     prob(Goal,ProbOut),
     write(Goal), write(': '), write(ProbOut), write('\n').
 
@@ -42,15 +43,12 @@ msw_prob(V,C,[Value|Values],[Prob|Probs],Acc,ProbOfMsw) :-
     NewAcc = Prob*ProbOut + Acc,
     msw_prob(V,C,Values,Probs,NewAcc,ProbOfMsw).
 
-prism(Goal) :-
-     prob(Goal,ProbOut),
-     write(Goal), write(': '), write(ProbOut), write('\n').
 
 %% Example:
 
 values_x(f,[t,f],[0.5,0.5]).
 
-% ?- toplevel(prob((msw(i,t),msw(i,t)))).
+% ?- toplevel(prism((msw(f,t),msw(f,t)))).
 % (msw(f,t), msw(f,t))): 0.25
 
 values_x(coin,[h,t],[0.5,0.5]).
@@ -59,6 +57,20 @@ twoHeads :- msw(coin,h),msw(coin,h).
 oneHead :- msw(coin,V),(V = h ; V = t, msw(coin,h)).
 oneHeadWrong :- msw(coin,h) ; msw(coin,h).
 
+% ?- toplevel(prism((twoHeads))).
+% twoHeads: 0.25
+% true ;
+% false.
+%
+% ?- toplevel(prism(oneHead)).
+% oneHead: 0.75
+% true ;
+% false.
+% 
+% ?- toplevel(prism((twoHeads))).
+% twoHeads: 0.25
+% true ;
+% false.
 
 %==============================================================================
 %% ProbLog interpreter
@@ -102,7 +114,7 @@ p :- f1(2).
 
 q(_) :- f1(1),not(f1(2)).
 
-% ?- toplevel(prob(problog((f1(X),f1(X)))))
+% ?- toplevel(prism(problog((f1(X),f1(X)))))
 % problog((f1(X),f1(X))): 0.5
 
 
@@ -113,5 +125,5 @@ coin2 :- fact(coin2).
 
 oneHeadP :- coin1 ; coin2.
 
-% ?- toplevel(prob(problog(oneHeadP)))
+% ?- toplevel(prism(problog(oneHeadP)))
 % problog(oneHeadP): 0.75

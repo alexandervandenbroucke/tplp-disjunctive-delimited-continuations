@@ -190,11 +190,22 @@ do_reset((write(T),Conj),Pattern,PatternCopy,Result,Disj) :-
     write(T),
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
 
+%% writeln/1 pattern
+do_reset((writeln(T),Conj),Pattern,PatternCopy,Result,Disj) :-
+    !,
+    writeln(T),
+    do_reset(Conj,Pattern,PatternCopy,Result,Disj).
+
 %% sort/2 pattern
 do_reset((sort(LIn,LOut),Conj),Pattern,PatternCopy,Result,Disj) :-
     !,
     sort(LIn,LOut),
     do_reset(Conj,Pattern,PatternCopy,Result,Disj).
+
+%% call/1 pattern
+do_reset((call(G),Conj),Pattern,PatternCopy,Result,Disj) :-
+    !,
+    do_reset((G,Conj),Pattern,PatternCopy,Result,Disj).
 
 %% clause pattern.
 do_reset((G,Conj),Pattern,PatternCopy,Result,Disj) :-
